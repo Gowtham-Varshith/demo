@@ -1,107 +1,100 @@
 import streamlit as st
-from agent import ask_ai_stream, fake_ai_response
+import requests
+import time
 
-# -------- CONFIG --------
-st.set_page_config(page_title="AI Assistant", layout="wide")
+# ---------------- CONFIG ----------------
+st.set_page_config(page_title="Demo-Gowtham-Ai agent", page_icon="🤖")
 
-# -------- PREMIUM CSS + BUBBLES --------
+# ---------------- STYLE ----------------
 st.markdown("""
 <style>
-
-/* Background gradient */
-body {
-    background: linear-gradient(135deg, #020617, #0f172a);
+.block-container {
+    max-width: 800px;
+    margin: auto;
 }
 
-/* Floating bubbles */
-.bubble {
-    position: fixed;
-    bottom: -100px;
-    width: 40px;
-    height: 40px;
-    background: rgba(99,102,241,0.3);
-    border-radius: 50%;
-    animation: rise 15s infinite ease-in;
-}
-
-@keyframes rise {
-    0% { transform: translateY(0); opacity:0; }
-    50% { opacity:0.6; }
-    100% { transform: translateY(-100vh); opacity:0; }
-}
-
-/* Chat bubbles */
-[data-testid="stChatMessage"] {
-    border-radius: 15px;
+.user-msg {
+    background: linear-gradient(90deg, #2563eb, #06b6d4);
     padding: 12px;
+    border-radius: 12px;
     margin: 10px 0;
-}
-
-[data-testid="stChatMessage"][data-author="user"] {
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    text-align: right;
     color: white;
+    font-size: 15px;
 }
 
-[data-testid="stChatMessage"][data-author="assistant"] {
-    background: rgba(30,41,59,0.7);
-    border: 1px solid rgba(255,255,255,0.1);
+.bot-msg {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 10px 0;
+    color: #e2e8f0;
+    font-size: 15px;
 }
 
-/* Title */
-h1 {
-    text-align:center;
-    font-size:2.5rem;
-    background: linear-gradient(90deg, #38bdf8, #6366f1);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+/* Chat input spacing */
+.stChatInput {
+    margin-top: 20px;
 }
-
 </style>
-
-<div class="bubble" style="left:10%"></div>
-<div class="bubble" style="left:30%"></div>
-<div class="bubble" style="left:50%"></div>
-<div class="bubble" style="left:70%"></div>
-<div class="bubble" style="left:90%"></div>
-
 """, unsafe_allow_html=True)
 
-# -------- TITLE --------
-st.markdown("<h1>🤖 AI Assistant (Final Boss UI)</h1>", unsafe_allow_html=True)
+# ---------------- TITLE ----------------
+st.title("🤖 Demo-Gowtham-Ai agent")
 
-# -------- MODE --------
-mode = st.sidebar.selectbox("Mode", ["Local AI (Ollama)", "Demo (Cloud)"])
-
-# -------- MEMORY --------
+# ---------------- STATE ----------------
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
-# -------- INPUT --------
-user_input = st.chat_input("Ask anything...")
+# ---------------- PDF UPLOAD ----------------
+uploaded_file = st.file_uploader("📄 Upload PDF", type=["pdf"])
+
+if uploaded_file:
+    try:
+        requests.post(
+            "http://127.0.0.1:8000/upload",
+            files={"file": uploaded_file}
+        )
+        st.success("PDF uploaded successfully ✅")
+    except:
+        st.error("Backend not running ❌")
+
+# ---------------- DISPLAY CHAT ----------------
+for role, msg in st.session_state.chat:
+    if role == "user":
+        st.markdown(f'<div class="user-msg">{msg}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="bot-msg">{msg}</div>', unsafe_allow_html=True)
+
+# ---------------- CHAT INPUT ----------------
+user_input = st.chat_input("Type your message...")
 
 if user_input:
-    st.session_state.chat.append(("You", user_input))
-    st.chat_message("user").write(user_input)
+    # Add user message
+    st.session_state.chat.append(("user", user_input))
 
-    msg_box = st.chat_message("assistant").empty()
+    # 🔥 SHOW LOADING SPINNER
+    with st.spinner("🤖 Thinking..."):
+        try:
+            res = requests.post(
+                "http://127.0.0.1:8000/chat",
+                json={"message": user_input}
+            )
+            reply = res.json()["reply"]
+        except:
+            reply = "⚠️ Backend error"
 
-    full_reply = ""
+    # 🔥 TYPING ANIMATION EFFECT
+    placeholder = st.empty()
+    typed_text = ""
 
-    if mode == "Local AI (Ollama)":
-        for chunk in ask_ai_stream(f"Answer briefly:\n{user_input}"):
-            full_reply = chunk
-            msg_box.write(full_reply)
+    for char in reply:
+        typed_text += char
+        placeholder.markdown(
+            f'<div class="bot-msg">{typed_text}</div>',
+            unsafe_allow_html=True
+        )
+        time.sleep(0.01)
 
-    else:
-        # cloud demo fallback
-        full_reply = fake_ai_response(user_input)
-        msg_box.write(full_reply)
-
-    st.session_state.chat.append(("AI", full_reply))
-
-# -------- HISTORY --------
-for role, msg in st.session_state.chat[:-1]:
-    if role == "You":
-        st.chat_message("user").write(msg)
-    else:
-        st.chat_message("assistant").write(msg)
+    # Save final message
+    st.session_state.chat.append(("bot", reply))

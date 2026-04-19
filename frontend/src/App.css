@@ -1,0 +1,56 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+}
+
+.app {
+  text-align: center;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.chat-box {
+  max-width: 700px;
+  margin: auto;
+  margin-bottom: 20px;
+}
+
+.user {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px;
+}
+
+.ai {
+  background: #334155;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px;
+}
+
+.input-area {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
