@@ -10,3 +10,5 @@ python-multipart==0.0.9
 streamlit==1.36.0
 PyPDF2==3.0.1
 rapidfuzz==3.9.3
+m pip install streamlit
+python -m streamlit run app.py
